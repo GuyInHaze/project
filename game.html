@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>game</title>
+</head>
+<style>
+    .a{
+        line-height: .4em;
+    }
+</style>
+<body>
+<form>
+Enter Rows Num:<input type="text" id="rows" value="12">  Enter Columns Num:<input type="text" id="coll" value="12"><br/>
+    Counter: <u id="counter">0</u>
+    Steps: <u id="steps">0</u>
+    Apples left: <u id="applesleftf">0</u><br/>
+    <div align="right">Apples eaten by snak: <u id="applessnake">0</u></div>
+    <input type="button" onclick = "placing()" value="start"/>
+</form>
+<button onclick="bomb()">bomb</button> - warning: use only when u or apples are imprisoned
+<div class="a"><p id="name" ></p></div>
+</body>
+
+  <script>
+       var j = 1;//just var for setting players rows coordinate
+       var h = 1;//just var for setting players columns coordinate
+       var steps = 0;
+       var count = 0;
+       var field = [[]];
+       var minrandomvalue = Math.ceil(1);
+       var maxrandomvalue = Math.floor(4);
+       var randomforcrates = 0;
+       var rowsInput = document.getElementById("rows").value - 1;
+       var columnsInput = document.getElementById("coll").value;
+       var childid = columnsInput + 2;
+       var snakeid = 0;
+       var applecount = 0;
+       var rightPressed = false;
+       var leftPressed = false;
+       var upPressed = false;
+       var downPressed = false;
+       var applesleft = 0;
+       var snakerightcheck = 0;
+       var snakeleftcheck = 0;
+       var snakeupcheck = 0;
+       var snakedowncheck = 0;
+       document.addEventListener("keydown", keyDownHandler, false);
+       document.addEventListener("keyup", keyUpHandler, false);
+       var player ='<img src = "./player.png">';
+       var wall ='<img src = "./wall.png">';
+       var emptyField ='<img src = "./emptyfield.png">';
+       var apple ='<img src = "./apple.png">';
+       var snake = '<img src ="./snake.png">';
+       var newfield = 0;
+       var sx = columnsInput - 2;
+       var sy = rowsInput - 1;
+       var eatenapples = 0;
+       var righty = 0;
+       var rightx = 0;
+       var lefty = 0;
+       var leftx = 0;
+       var upy = 0;
+       var upx = 0;
+       var downy = 0;
+       var downx = 0;
+       var up = 0;
+       var down = 0;
+       var left = 0;
+       var right = 0;
+       function placing() {
+           document.getElementById("counter").innerHTML = "0";
+           document.getElementById("steps").innerHTML = "0";
+           eatenapples = 0;
+           j = 1;
+           h = 1;
+           sx = columnsInput - 2;
+           sy = rowsInput - 1;
+           steps = 0;
+           count = 0;
+           applecount = 0;
+           field = [[]];
+           document.getElementById("name").innerHTML = "";
+           rowsInput = document.getElementById("rows").value - 1;
+           columnsInput = document.getElementById("coll").value * 1;
+           if(rowsInput > 32 || columnsInput > 32){
+               alert("Maximum for rows and columns is 32. Values have been set to their maximum.");
+               if(columnsInput > 32 && rowsInput !== 32){
+                   columnsInput = 32;
+                   document.getElementById("coll").value = "32";
+               }
+               else if(rowsInput > 32 && columnsInput !== 32){
+                   rowsInput = 32;
+                   document.getElementById("rows").value = "32";
+               }
+               else{
+               rowsInput = 32;
+               columnsInput = 32;
+               document.getElementById("rows").value = "32";
+               document.getElementById("coll").value = "32";
+               }
+           }
+           childid = columnsInput + 2;
+           for (i = 0; i < rowsInput; i++) {
+               field.push([]);
+           }
+           for (i = 0; i <= rowsInput; i++) {
+               for (k = 0; k < columnsInput; k++) {
+                   field[i].push(2);
+               }
+           }
+           cratesSetting();
+
+           field[1][1] = 3;
+           field[sy][sx] = 4;
+           for(i = 1; i <= rowsInput; i++){
+               field[i][0] = 2;
+               field[i][columnsInput - 1] = 2;
+           }
+           for(k = 1; k < columnsInput; k++){
+               field[0][k] = 2;
+               field[rowsInput][k] = 2;
+           }
+           for (i = 0; i <= rowsInput; i++) {
+               for (k = 0; k < columnsInput; k++) {
+                   if(field[i][k] === 1){
+                       applecount ++;
+                   }
+               }
+           }
+           applesleft = applecount;
+           document.getElementById("applesleftf").innerHTML = applesleft;
+           for (i = 0; i < field.length; i++) {
+               var newarray = field[i].map(Func);
+               var joinarray = newarray.join("");
+               document.getElementById("name").innerHTML += joinarray + "<br>";
+           }
+           newfield = document.getElementById("name").children;
+           snakeid = newfield.length - columnsInput - 4;
+           snakerightcheck = snakeid + 1 - childid;
+           snakeleftcheck = snakeid - 1 - childid;
+           snakeupcheck = snakeid - columnsInput - 1 - childid;
+           snakedowncheck = snakeid + columnsInput + 1 - childid
+       }
+       function keyDownHandler(e) {
+           if (e.which === 39) {
+               rightPressed = true;
+           } else if (e.which === 37) {
+               leftPressed = true;
+           }
+           if (e.which === 38){
+               upPressed = true;
+           } else if (e.which === 40){
+               downPressed = true;
+           }
+           whenKeyIsUp();
+       }
+       function keyUpHandler(e) {
+           if (e.which === 39) {
+               rightPressed = false;
+           } else if (e.which === 37) {
+               leftPressed = false;
+           }
+           if (e.which === 38){
+               upPressed = false;
+           } else if (e.which === 40){
+               downPressed = false;
+           }
+           whenKeyIsUp();
+       }
+       function cratesSetting(){
+               if(Math.trunc((rowsInput-1)/3) === (rowsInput-1)/3 && Math.trunc((columnsInput-2)/3) === (columnsInput-2)/3){
+                   for(i = 1; i <= (rowsInput - 2); i += 3) {
+                       for (k = 1; k <= (columnsInput-3); k += 3) {
+                           randomforcrates = Math.floor(Math.random() * (maxrandomvalue - minrandomvalue + 1)) + minrandomvalue;
+                           if (randomforcrates === 1) {
+                               field[i][k + 1] = 0;
+                               field[i][k + 2] = 1;
+                               field[i + 1][k] = 0;
+                               field[i + 1][k + 1] = 1;
+                               field[i + 1][k + 2] = 1;
+                               field[i + 2][k] = 0;
+                               field[i + 2][k + 1] = 0;
+                               field[i + 2][k + 2] = 2;
+                           }
+                           if (randomforcrates === 2) {
+                               field[i][k + 1] = 2;
+                               field[i][k + 2] = 1;
+                               field[i + 1][k] = 1;
+                               field[i + 1][k + 1] = 0;
+                               field[i + 1][k + 2] = 1;
+                               field[i + 2][k] = 1;
+                               field[i + 2][k + 1] = 1;
+                               field[i + 2][k + 2] = 0;
+                           }
+                           if (randomforcrates === 3) {
+                               field[i][k + 1] = 2;
+                               field[i][k + 2] = 1;
+                               field[i + 1][k] = 1;
+                               field[i + 1][k + 1] = 0;
+                               field[i + 1][k + 2] = 1;
+                               field[i + 2][k] = 0;
+                               field[i + 2][k + 1] = 1;
+                               field[i + 2][k + 2] = 2;
+                           }
+                           if (randomforcrates === 4) {
+                               field[i][k + 1] = 1;
+                               field[i][k + 2] = 2;
+                               field[i + 1][k] = 1;
+                               field[i + 1][k + 1] = 0;
+                               field[i + 1][k + 2] = 0;
+                               field[i + 2][k] = 2;
+                               field[i + 2][k + 1] = 1;
+                               field[i + 2][k + 2] = 1;
+                           }
+                       }
+                   }
+               }
+               else if(Math.trunc((rowsInput-1)/2) === (rowsInput-1)/2 && Math.trunc((columnsInput-2)/2) === (columnsInput-2)/2){
+                   for(i = 1; i <= (rowsInput - 2); i += 2) {
+                       for (k = 1; k <= (columnsInput-3); k += 2) {
+                           randomforcrates = Math.floor(Math.random() * (maxrandomvalue - minrandomvalue + 1)) + minrandomvalue;
+                           if (randomforcrates === 1) {
+                               field[i][k + 1] = 0;
+                               field[i + 1][k] = 0;
+                               field[i + 1][k + 1] = 1;
+                           }
+                           if (randomforcrates === 2) {
+                               field[i][k + 1] = 1;
+                               field[i + 1][k] = 1;
+                               field[i + 1][k + 1] = 0;
+                           }
+                           if (randomforcrates === 3) {
+                               field[i][k + 1] = 2;
+                               field[i + 1][k] = 1;
+                               field[i + 1][k + 1] = 0;
+                           }
+                           if (randomforcrates === 4) {
+                               field[i][k + 1] = 1;
+                               field[i + 1][k] = 1;
+                               field[i + 1][k + 1] = 0;
+                           }
+                       }
+                   }
+               }
+               else {
+                   for (i = 1; i <= rowsInput - 1; i++) {
+                       for (k = 1; k < columnsInput - 1; k++) {
+                           minforelse = Math.ceil(0);
+                           maxforelse = Math.floor(2);
+                           field[i][k] = Math.floor(Math.random() * (maxforelse - minforelse + 1)) + minforelse;
+                       }
+                   }
+                   for (i = 1; i <= rowsInput - 1; i++) {
+                       for (k = 1; k < columnsInput - 1; k++) {
+                           if (field[i - 1][k] !== field[0][k] || field[i + 1][k] !== field[rowsInput + 1] || field[i][k - 1] !== field[i][0] || field[i][k + 1] !== field[i][columnsInput]) {
+                               if ((field[i - 1][k] === 2 && field[i + 1][k] === 2 && field[i][k - 1] === 2 && field[i][k + 1] === 2) || (field[i - 1][k] === 2 && field[i + 1][k] === 2 && field[i][k - 1] === 2) || (field[i - 1][k] === 2 && field[i + 1][k] === 2 && field[i][k + 1] === 2) || (field[i - 1][k] === 2 && field[i][k - 1] === 2 && field[i][k + 1] === 2)){
+                                   field[i - 1][k] = 0;
+                                   field[i + 1][k] = 0;
+                                   field[i][k - 1] = 0;
+                                   field[i][k + 1] = 0;
+                                   field[i + 1][k + 1] = 0;
+                                   field[i - 1][k + 1] = 0;
+                                   field[i - 1][k - 1] = 2;
+                                   field[i + 1][k - 1] = 2
+                               }
+                           }
+                       }
+                   }
+               }
+           }
+       function Func(item) {
+               if (item === 0) {
+                   return emptyField
+               }
+               if (item === 2) {
+                   return wall
+               }
+               if (item === 1) {
+                   return apple
+               }
+               if (item === 3) {
+                   return  player
+               }
+               if(item === 4){
+                   return snake
+               }
+           }
+       function whenKeyIsUp() {
+           if (upPressed) {
+               if (field[j - 1][h] === 0 || field[j - 1][h] === 1) {
+                   if (field[j - 1][h] === 1) {
+                       count++;
+                       document.getElementById("counter").innerHTML = count;
+                       applesleft--;
+                       document.getElementById("applesleftf").innerHTML = applesleft;
+                   }
+                   newfield[childid].outerHTML = '<img src = "./emptyfield.png">';
+                   childid = childid - columnsInput - 1;
+                   newfield[childid].outerHTML = '<img src = "./player.png">';
+
+                   field[j - 1][h] = 3;
+                   field[j][h] = 0;
+                   j--;
+                   steps++;
+                   document.getElementById("steps").innerHTML = steps;
+               }
+           }
+           if (downPressed) {
+               if (field[j + 1][h] === 0 || field[j + 1][h] === 1) {
+                   if (field[j + 1][h] === 1) {
+                       count++;
+                       document.getElementById("counter").innerHTML = count;
+                       applesleft--;
+                       document.getElementById("applesleftf").innerHTML = applesleft;
+                   }
+                   newfield[childid].outerHTML = '<img src = "./emptyfield.png">';
+                   childid = childid + columnsInput + 1;
+                   newfield[childid].outerHTML = '<img src = "./player.png">';
+                   field[j + 1][h] = 3;
+                   field[j][h] = 0;
+                   j++;
+                   steps++;
+                   document.getElementById("steps").innerHTML = steps;
+               }
+           }
+           if (rightPressed) {
+               if (field[j][h + 1] === 0 || field[j][h + 1] === 1) {
+                   if (field[j][h + 1] === 1) {
+                       count++;
+                       document.getElementById("counter").innerHTML = count;
+                       applesleft--;
+                       document.getElementById("applesleftf").innerHTML = applesleft;
+                   }
+                   newfield[childid].outerHTML = '<img src = "./emptyfield.png">';
+                   childid = childid + 1;
+                   newfield[childid].outerHTML = '<img src = "./player.png">';
+                   field[j][h + 1] = 3;
+                   field[j][h] = 0;
+                   h++;
+                   steps++;
+                   document.getElementById("steps").innerHTML = steps;
+               }
+           }
+           if (leftPressed) {
+               if (field[j][h - 1] === 0 || field[j][h - 1] === 1) {
+                   if (field[j][h - 1] === 1) {
+                       count++;
+                       document.getElementById("counter").innerHTML = count;
+                       applesleft--;
+                       document.getElementById("applesleftf").innerHTML = applesleft;
+                   }
+                   newfield[childid].outerHTML = '<img src = "./emptyfield.png">';
+                   childid = childid - 1;
+                   newfield[childid].outerHTML = '<img src = "./player.png">';
+                   field[j][h - 1] = 3;
+                   field[j][h] = 0;
+                   h--;
+                   steps++;
+                   document.getElementById("steps").innerHTML = steps;
+               }
+           }
+           if (j === 0 || h === 0 || j === rowsInput || h === columnsInput) {
+               alert("You finally reached your freedom! Another ending reached. Page will refresh so you can start again.")
+               document.location.reload();
+           }
+           if (applesleft === 0 && count !== 0) {
+               alert("You won! Page will refresh so you can start again. Try enter new data and field gen!")
+           }
+           snakemoving();
+       }
+       function snakemoving(){
+           if(j <= sy && h <= sx){
+               righty = (sy - j);
+               lefty = (sy - j);
+               upy = (sy - j);
+               downy = (sy - j);
+               rightx = (sx + 1 - h);
+               leftx = (sx - 1 - h);
+               upx = (sx - h);
+               downx = (sx - h);
+           }
+            if(h <= sx && j >= sy) {
+               rightx = (sx + 1 - h);
+               leftx = (sx - 1 - h);
+               upx = (sx - h);
+               downx = (sx - h);
+                righty = (j - sy);
+                lefty = (j - sy);
+                upy = (j - sy - 1);
+                downy = (j - sy + 1);
+           }
+           if(j >= sy && h >= sx){
+               righty = (j - sy);
+               lefty = (j - sy);
+               upy = (j - sy - 1);
+               downy = (j - sy + 1);
+               rightx = (h - sx + 1);
+               leftx = (h - sx - 1);
+               upx = (h - sx);
+               downx = (h - sx);
+           }
+           if(h >= sx && j <= sy){
+               rightx = (h - sx + 1);
+               leftx = (h - sx - 1);
+               upx = (h - sx);
+               downx = (h - sx);
+               righty = (sy - j);
+               lefty = (sy - j);
+               upy = (sy - 1 - j);
+               downy = (sy + 1 - j);
+           }
+           right = rightx + righty;
+           left = leftx + lefty;
+           up = upx + upy;
+           down = downx + downy;
+           if (upPressed || downPressed || leftPressed || rightPressed) {
+               if (h <= sx && j <= sy) {
+                   if (field[sy][sx - 1] === 0 || field[sy][sx - 1] === 1 || field[sy][sx - 1] === 3) {
+                       if (left <= up) {
+                           if (field[sy][sx - 1] === 1) {
+                               eatenapples++;
+                               applesleft--;
+                               document.getElementById("applessnake").innerHTML = eatenapples;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                               //snakeid --;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           }//else {
+                           newfield[snakeid].outerHTML = '<img src = "./emptyfield.png">';
+                           snakeid--;
+                           newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           field[sy][sx] = 0;
+                           sx--;
+                           field[sy][sx] = 4;
+                           //}
+                           if (field[sy][sx - 1] === 3) {
+                               alert("You lost! Snake has you disarmed!")
+                           }
+                       }
+                   }
+
+                   if (field[sy - 1][sx] === 0 || field[sy - 1][sx] === 1 || field[sy - 1][sx] === 3) {
+                       if (up <= left) {
+                           if (field[sy - 1][sx] === 1) {
+                               eatenapples++;
+                               applesleft--;
+                               document.getElementById("applessnake").innerHTML = eatenapples;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                               //snakeid = snakeid - columnsInput - 1;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           }
+                           //else {
+                           newfield[snakeid].outerHTML = '<img src = "./emptyfield.png">';
+                           snakeid = snakeid - columnsInput - 1;
+                           newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           field[sy][sx] = 0;
+                           sy--;
+                           field[sy][sx] = 4;
+                           //}
+                           if (field[sy - 1][sx] === 3) {
+                               alert("You lost! Snake has you disarmed!")
+                           }
+                       }
+                   }
+               }
+               if (h >= sx && j <= sy) {
+                   if (field[sy][sx + 1] === 0 || field[sy][sx + 1] === 1 || field[sy][sx + 1] === 3) {
+                       if (right >= up) {
+                           if (field[sy][sx + 1] === 1) {
+                               eatenapples++;
+                               applesleft--;
+                               document.getElementById("applessnake").innerHTML = eatenapples;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                               //snakeid ++;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           }//else {
+                           newfield[snakeid].outerHTML = '<img src = "./emptyfield.png">';
+                           snakeid++;
+                           newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           field[sy][sx] = 0;
+                           sx++;
+                           field[sy][sx] = 4;
+                           //}
+                           if (field[sy][sx + 1] === 3) {
+                               alert("You lost! Snake has you disarmed!")
+                           }
+                       }
+                   }
+                   if (field[sy - 1][sx] === 0 || field[sy - 1][sx] === 1 || field[sy - 1][sx] === 3) {
+                       if (up >= right) {
+                           if (field[sy - 1][sx] === 1) {
+                               eatenapples++;
+                               applesleft--;
+                               document.getElementById("applessnake").innerHTML = eatenapples;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                               //snakeid = snakeid - columnsInput - 1;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           }
+                           //else {
+                           newfield[snakeid].outerHTML = '<img src = "./emptyfield.png">';
+                           snakeid = snakeid - columnsInput - 1;
+                           newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           field[sy][sx] = 0;
+                           sy--;
+                           field[sy][sx] = 4;
+                           //}
+                           if (field[sy - 1][sx] === 3) {
+                               alert("You lost! Snake has you disarmed!")
+                           }
+                       }
+                   }
+               }
+               if (h <= sx && j >= sy) {
+                   if (field[sy][sx - 1] === 0 || field[sy][sx - 1] === 1 || field[sy][sx - 1] === 3) {
+                       if (left <= down) {
+                           if (field[sy][sx - 1] === 1) {
+                               eatenapples++;
+                               applesleft--;
+                               document.getElementById("applessnake").innerHTML = eatenapples;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                               //snakeid --;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           }
+                           //else {
+                           newfield[snakeid].outerHTML = '<img src = "./emptyfield.png">';
+                           snakeid--;
+                           newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           field[sy][sx] = 0;
+                           sx--;
+                           field[sy][sx] = 4;
+                           //}
+                           if (field[sy][sx - 1] === 3) {
+                               alert("You lost! Snake has you disarmed!")
+                           }
+                       }
+                   }
+
+                   if (field[sy + 1][sx] === 0 || field[sy + 1][sx] === 1 || field[sy + 1][sx] === 3) {
+                       if (down <= left) {
+                           if (field[sy + 1][sx] === 1) {
+                               eatenapples++;
+                               applesleft--;
+                               document.getElementById("applessnake").innerHTML = eatenapples;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                               //snakeid = snakeid + columnsInput + 1;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           }//else {
+                           newfield[snakeid].outerHTML = '<img src = "./emptyfield.png">';
+                           snakeid = snakeid + columnsInput + 1;
+                           newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           field[sy][sx] = 0;
+                           sy++;
+                           field[sy][sx] = 4;
+                           //}
+                           if (field[sy + 1][sx] === 3) {
+                               alert("You lost! Snake has you disarmed!")
+                           }
+                       }
+                   }
+               }
+               if(j >= sy && h >= sx){
+                   if (field[sy + 1][sx] === 0 || field[sy + 1][sx] === 1 || field[sy + 1][sx] === 3) {
+                       if (down >= right) {
+                           if (field[sy + 1][sx] === 1) {
+                               eatenapples++;
+                               applesleft--;
+                               document.getElementById("applessnake").innerHTML = eatenapples;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                               //snakeid = snakeid + columnsInput + 1;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           }//else {
+                           newfield[snakeid].outerHTML = '<img src = "./emptyfield.png">';
+                           snakeid = snakeid + columnsInput + 1;
+                           newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           field[sy][sx] = 0;
+                           sy++;
+                           field[sy][sx] = 4;
+                           //}
+                           if (field[sy + 1][sx] === 3) {
+                               alert("You lost! Snake has you disarmed!")
+                           }
+                       }
+                   }
+                   if (field[sy][sx - 1] === 0 || field[sy][sx - 1] === 1 || field[sy][sx - 1] === 3) {
+                       if (right >= down) {
+                           if (field[sy][sx + 1] === 1) {
+                               eatenapples++;
+                               applesleft--;
+                               document.getElementById("applessnake").innerHTML = eatenapples;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                               //snakeid ++;
+                               //newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           }//else {
+                           newfield[snakeid].outerHTML = '<img src = "./emptyfield.png">';
+                           snakeid++;
+                           newfield[snakeid].outerHTML = '<img src = "./snake.png">';
+                           field[sy][sx] = 0;
+                           sx++;
+                           field[sy][sx] = 4;
+                           //}
+                           if (field[sy][sx + 1] === 3) {
+                               alert("You lost! Snake has you disarmed!")
+                           }
+                       }
+                   }
+               }
+
+           }
+       }
+       function bomb() {
+           field[j][h + 1] = 0;
+           field[j + 1][h] = 0;
+           field[j - 1][h] = 0;
+           field[j][h - 1] = 0;
+           let up = childid - columnsInput - 1;
+           newfield[up].outerHTML = '<img src = "./emptyfield.png">';
+           let down = childid + columnsInput + 1;
+           newfield[down].outerHTML = '<img src = "./emptyfield.png">';
+           let right = childid + 1;
+           newfield[right].outerHTML = '<img src = "./emptyfield.png">';
+           let left = childid - 1;
+           newfield[left].outerHTML = '<img src = "./emptyfield.png">';
+           alert("u have bombed something out!")
+       }
+   </script>
+</html>
